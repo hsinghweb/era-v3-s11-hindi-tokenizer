@@ -246,8 +246,18 @@ def main():
     # Train the tokenizer
     tokenizer.train([str(preprocessed_path)], trainer)
 
+    # Get and display vocabulary size
+    vocab_size = tokenizer.get_vocab_size()
+    print(f"\nFinal vocabulary size: {vocab_size} tokens")
+    print(f"Special tokens: {trainer.special_tokens}")
+    
+    if vocab_size >= 5000:
+        print("Warning: Vocabulary size exceeds the 5000 token limit!")
+    else:
+        print(f"Success: Vocabulary size ({vocab_size}) is within the limit of 5000 tokens")
+
     # Step 4: Save the trained tokenizer
-    print("Step 4: Saving tokenizer files...")
+    print("\nStep 4: Saving tokenizer files...")
     vocab_path = output_dir / "hindi_vocab.bpe"
     config_path = output_dir / "hindi_encoder.json"
     
@@ -263,7 +273,7 @@ def main():
     if compression_ratio < 3.2:
         print("Warning: Compression ratio is below the required threshold of 3.2!")
     else:
-        print("Success: Compression ratio meets the requirement!")
+        print(f"Success: Compression ratio ({compression_ratio:.2f}) exceeds the minimum requirement of 3.2")
 
     # Step 6: Test the tokenizer
     test_text = "नमस्ते भारत! यह एक परीक्षण वाक्य है।"
