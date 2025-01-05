@@ -25,19 +25,24 @@ A Python script for preprocessing Hindi text and training a Byte Pair Encoding (
 ## Requirements
 
 Install required packages:
-bash
+```
 pip install tokenizers requests tqdm
+```
 
 ## Quick Start
 
 1. Run the tokenizer training script:
-bash
+```
 python hindi_tokenizer.py
+```
 
 2. Use the interactive encoder/decoder:
-bash:README.md
+```
 python use_tokenizer.py
+```
+
 ## Directory Structure
+```
 .
 ├── hindi_tokenizer.py # Main training script
 ├── use_tokenizer.py # Interactive encoding/decoding tool
@@ -48,7 +53,7 @@ python use_tokenizer.py
 ├── hindi_vocab-vocab.json # Vocabulary mapping
 ├── hindi_vocab-merges.txt # BPE merge rules
 └── hindi_encoder.json # Tokenizer config
-
+```
 
 ## Dataset
 
@@ -60,21 +65,19 @@ python use_tokenizer.py
 ## Usage Examples
 
 ### Training the Tokenizer
-
-python
+```
 from hindi_tokenizer import main
-Train and get the tokenizer
+# Train and get the tokenizer
 tokenizer = main()
-
+```
 
 
 ### Using the Trained Tokenizer
-
-python
+```
 from hindi_tokenizer import load_tokenizer, encode_text, decode_text
-Load existing tokenizer
+# Load existing tokenizer
 tokenizer = load_tokenizer("output/hindi_encoder.json")
-Encode text
+# Encode text
 text = "नमस्ते भारत!"
 token_ids, tokens = encode_text(tokenizer, text)
 print(f"Tokens: {tokens}")
@@ -82,7 +85,7 @@ print(f"Token IDs: {token_ids}")
 Decode back to text
 decoded_text = decode_text(tokenizer, token_ids)
 print(f"Decoded: {decoded_text}")
-
+```
 
 ## Technical Details
 
@@ -118,6 +121,5 @@ The script includes comprehensive error handling for:
 Feel free to open issues or submit pull requests for improvements.
 
 ## License
-
 MIT License
 
