@@ -210,10 +210,10 @@ def main():
     # Step 2: Prepare and preprocess the dataset
     print("Step 2: Preprocessing dataset...")
     try:
-        # Sample 100,000 lines from the first 1 million lines
+        # Sample 200,000 lines from the first 1 million lines
         raw_data = prepare_dataset(
             raw_dataset_path,
-            sample_size=100_000,
+            sample_size=200_000,
             max_lines=1_000_000
         )
     except FileNotFoundError:
