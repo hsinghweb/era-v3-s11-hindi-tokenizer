@@ -97,6 +97,58 @@ def calculate_compression_ratio(tokenizer, corpus_path):
     total_tokens = sum(len(tokenizer.encode(line).tokens) for line in corpus)
     return total_chars / total_tokens
 
+def encode_text(tokenizer, text):
+    """
+    Encodes Hindi text into token IDs.
+    
+    Args:
+        tokenizer (Tokenizer): Trained BPE tokenizer
+        text (str): Hindi text to encode
+    
+    Returns:
+        tuple: (token_ids, tokens)
+    """
+    # Preprocess the text first
+    cleaned_text = preprocess_hindi_text(text)
+    
+    # Encode the text
+    encoding = tokenizer.encode(cleaned_text)
+    return encoding.ids, encoding.tokens
+
+def decode_text(tokenizer, token_ids):
+    """
+    Decodes token IDs back into Hindi text.
+    
+    Args:
+        tokenizer (Tokenizer): Trained BPE tokenizer
+        token_ids (list): List of token IDs to decode
+    
+    Returns:
+        str: Decoded Hindi text
+    """
+    return tokenizer.decode(token_ids)
+
+def test_tokenizer(tokenizer, test_text):
+    """
+    Tests the tokenizer by encoding and decoding sample text.
+    
+    Args:
+        tokenizer (Tokenizer): Trained BPE tokenizer
+        test_text (str): Sample text for testing
+    """
+    print("\nTokenizer Test:")
+    print("-" * 50)
+    print(f"Original Text: {test_text}")
+    
+    # Encode
+    token_ids, tokens = encode_text(tokenizer, test_text)
+    print(f"\nTokens: {tokens}")
+    print(f"Token IDs: {token_ids}")
+    
+    # Decode
+    decoded_text = decode_text(tokenizer, token_ids)
+    print(f"\nDecoded Text: {decoded_text}")
+
 def main():
     # Create output directory if it doesn't exist
     output_dir = Path("output")
@@ -172,6 +224,25 @@ def main():
         print("Warning: Compression ratio is below the required threshold of 3.2!")
     else:
         print("Success: Compression ratio meets the requirement!")
+
+    # Step 6: Test the tokenizer
+    test_text = "नमस्ते भारत! यह एक परीक्षण वाक्य है।"
+    test_tokenizer(tokenizer, test_text)
+
+    # Return the tokenizer for potential reuse
+    return tokenizer
+
+def load_tokenizer(config_path):
+    """
+    Loads a previously trained tokenizer from a configuration file.
+    
+    Args:
+        config_path (str): Path to the tokenizer configuration file
+    
+    Returns:
+        Tokenizer: Loaded tokenizer
+    """
+    return Tokenizer.from_file(config_path)
 
 if __name__ == "__main__":
     main() 
