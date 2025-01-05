@@ -1,13 +1,14 @@
 # Hindi BPE Tokenizer
 
-A Python script for preprocessing Hindi text and training a Byte Pair Encoding (BPE) tokenizer optimized for the Hindi language. The script automatically downloads the Hindi dataset from the IndicCorp collection.
+A Python script for preprocessing Hindi text and training a Byte Pair Encoding (BPE) tokenizer optimized for the Hindi language. The script automatically downloads and processes a portion of the IndicCorp Hindi dataset.
 
 ## Features
 
-- **Automatic Dataset Download**:
-  - Downloads Hindi corpus from IndicCorp
-  - Shows download progress with progress bar
-  - Supports dataset sampling for quick testing
+- **Smart Dataset Management**:
+  - Downloads first 2GB of IndicCorp Hindi dataset
+  - Supports download resume capability
+  - Samples 200,000 lines from first 1 million lines
+  - Progress bars for download and processing
 
 - **Text Preprocessing**:
   - Retains only Hindi characters (Unicode range: \u0900-\u097F)
@@ -29,36 +30,59 @@ pip install tokenizers requests tqdm
 
 ## Quick Start
 
-1. Run the script:
+1. Run the tokenizer training script:
 bash
 python hindi_tokenizer.py
 
-The script will automatically:
-1. Download the Hindi dataset (~1.5GB)
-2. Preprocess the text
-3. Train the BPE tokenizer
-4. Save all outputs
-5. Verify the compression ratio
-
+2. Use the interactive encoder/decoder:
+bash:README.md
+python use_tokenizer.py
 ## Directory Structure
-README.md
 .
-├── hindi_tokenizer.py # Main script
-├── raw_hindi_dataset.txt # Downloaded dataset
+├── hindi_tokenizer.py # Main training script
+├── use_tokenizer.py # Interactive encoding/decoding tool
+├── raw_hindi_dataset.txt # Downloaded dataset (2GB)
 └── output/
 ├── preprocessed_hindi.txt # Cleaned text
 ├── hindi_vocab.bpe # BPE vocabulary
+├── hindi_vocab-vocab.json # Vocabulary mapping
+├── hindi_vocab-merges.txt # BPE merge rules
 └── hindi_encoder.json # Tokenizer config
+
 
 ## Dataset
 
 - **Source**: IndicCorp Hindi Collection
 - **URL**: https://objectstore.e2enetworks.net/ai4b-public-nlu-nlg/v1-indiccorp/hi.txt
-- **Default Sample Size**: 100,000 lines (configurable)
+- **Download Size**: First 2GB of ~20GB file
+- **Training Sample**: 200,000 lines from first 1 million lines
 
-To use the full dataset, modify in `hindi_tokenizer.py`:
+## Usage Examples
+
+### Training the Tokenizer
+
 python
-raw_data = prepare_dataset(raw_dataset_path, sample_size=None)
+from hindi_tokenizer import main
+Train and get the tokenizer
+tokenizer = main()
+
+
+
+### Using the Trained Tokenizer
+
+python
+from hindi_tokenizer import load_tokenizer, encode_text, decode_text
+Load existing tokenizer
+tokenizer = load_tokenizer("output/hindi_encoder.json")
+Encode text
+text = "नमस्ते भारत!"
+token_ids, tokens = encode_text(tokenizer, text)
+print(f"Tokens: {tokens}")
+print(f"Token IDs: {token_ids}")
+Decode back to text
+decoded_text = decode_text(tokenizer, token_ids)
+print(f"Decoded: {decoded_text}")
+
 
 ## Technical Details
 
@@ -80,17 +104,11 @@ Calculated as: `total_characters / total_tokens`
 - Target: ≥ 3.2
 - Verified after training
 
-## Progress Monitoring
-
-The script provides progress bars for:
-- Dataset download
-- Text preprocessing
-- Tokenizer training
-
 ## Error Handling
 
-Comprehensive error handling for:
+The script includes comprehensive error handling for:
 - Network issues during download
+- Partial download resume
 - File I/O operations
 - Dataset processing
 - Compression ratio verification
