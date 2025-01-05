@@ -7,56 +7,91 @@ from tokenizers.trainers import BpeTrainer
 from tokenizers.pre_tokenizers import Whitespace
 from tqdm import tqdm
 
-def download_dataset(url, filepath):
+def download_dataset(url, filepath, max_size_gb=2):
     """
-    Downloads the dataset from the given URL with a progress bar.
+    Downloads a portion of the dataset with size limit and resume capability.
     
     Args:
         url (str): URL of the dataset
         filepath (Path): Path where the file should be saved
+        max_size_gb (float): Maximum size to download in gigabytes
     """
-    print(f"Downloading dataset from {url}")
-    response = requests.get(url, stream=True)
-    response.raise_for_status()
+    max_size_bytes = max_size_gb * 1024 * 1024 * 1024  # Convert GB to bytes
     
-    # Get file size for progress bar
-    total_size = int(response.headers.get('content-length', 0))
-    block_size = 1024  # 1 KB
+    # Check if we already have enough data
+    if filepath.exists() and filepath.stat().st_size >= max_size_bytes:
+        print(f"Already have {max_size_gb}GB of data, skipping download.")
+        return
     
-    with open(filepath, 'wb') as file, tqdm(
-        desc="Downloading",
-        total=total_size,
-        unit='iB',
-        unit_scale=True,
-        unit_divisor=1024,
-    ) as progress_bar:
-        for data in response.iter_content(block_size):
-            size = file.write(data)
-            progress_bar.update(size)
+    print(f"Downloading first {max_size_gb}GB from {url}")
+    
+    # Get the current size if file exists (for resume)
+    current_size = filepath.stat().st_size if filepath.exists() else 0
+    
+    # Set up headers for resume
+    headers = {'Range': f'bytes={current_size}-'} if current_size > 0 else {}
+    
+    try:
+        response = requests.get(url, stream=True, headers=headers)
+        response.raise_for_status()
+        
+        # Get file size for progress bar
+        total_size = min(
+            int(response.headers.get('content-length', 0)) + current_size,
+            max_size_bytes
+        )
+        
+        mode = 'ab' if current_size > 0 else 'wb'
+        with open(filepath, mode) as file, tqdm(
+            desc="Downloading",
+            initial=current_size,
+            total=total_size,
+            unit='iB',
+            unit_scale=True,
+            unit_divisor=1024,
+        ) as progress_bar:
+            for data in response.iter_content(chunk_size=8192):
+                if not data:
+                    break
+                    
+                size = file.write(data)
+                progress_bar.update(size)
+                
+                # Check if we've reached the size limit
+                if file.tell() >= max_size_bytes:
+                    print(f"\nReached {max_size_gb}GB limit, stopping download.")
+                    break
+                    
+    except requests.exceptions.RequestException as e:
+        print(f"Error during download: {e}")
+        if filepath.exists():
+            print("Partial download remains available for resume.")
+        raise
 
-def prepare_dataset(input_path, sample_size=None):
+def prepare_dataset(input_path, sample_size=None, max_lines=None):
     """
     Prepares the dataset by optionally sampling and basic cleaning.
     
     Args:
         input_path (Path): Path to the raw dataset
         sample_size (int, optional): Number of lines to sample. If None, use entire dataset
+        max_lines (int, optional): Maximum number of lines to read from file
     
     Returns:
         list: Processed lines from the dataset
     """
     print("Reading and preparing dataset...")
+    lines = []
+    
     with open(input_path, 'r', encoding='utf-8') as file:
-        if sample_size:
-            # Read the first sample_size non-empty lines
-            lines = []
-            for line in file:
-                if line.strip():
-                    lines.append(line)
-                    if len(lines) >= sample_size:
-                        break
-        else:
-            lines = [line for line in file if line.strip()]
+        for i, line in enumerate(tqdm(file, desc="Reading lines")):
+            if max_lines and i >= max_lines:
+                break
+                
+            if line.strip():
+                lines.append(line)
+                if sample_size and len(lines) >= sample_size:
+                    break
     
     return lines
 
@@ -159,23 +194,28 @@ def main():
     raw_dataset_path = Path("raw_hindi_dataset.txt")
     preprocessed_path = output_dir / "preprocessed_hindi.txt"
     
-    # Step 1: Download dataset if it doesn't exist
-    if not raw_dataset_path.exists():
-        print("Step 1: Downloading dataset...")
+    # Step 1: Download dataset if it doesn't exist or is too small
+    if not raw_dataset_path.exists() or raw_dataset_path.stat().st_size < (2 * 1024 * 1024 * 1024):
+        print("Step 1: Downloading dataset (2GB limit)...")
         try:
-            download_dataset(dataset_url, raw_dataset_path)
+            download_dataset(dataset_url, raw_dataset_path, max_size_gb=2)
         except requests.exceptions.RequestException as e:
             print(f"Error downloading dataset: {e}")
-            return
+            if not raw_dataset_path.exists():
+                return
+            print("Continuing with existing partial download...")
     else:
-        print("Dataset already exists, skipping download.")
+        print("Sufficient dataset already exists, skipping download.")
     
     # Step 2: Prepare and preprocess the dataset
     print("Step 2: Preprocessing dataset...")
     try:
-        # Sample 100,000 lines for initial testing
-        # Remove or adjust sample_size for full dataset
-        raw_data = prepare_dataset(raw_dataset_path, sample_size=100_000)
+        # Sample 100,000 lines from the first 1 million lines
+        raw_data = prepare_dataset(
+            raw_dataset_path,
+            sample_size=100_000,
+            max_lines=1_000_000
+        )
     except FileNotFoundError:
         print(f"Error: Input file '{raw_dataset_path}' not found!")
         return
