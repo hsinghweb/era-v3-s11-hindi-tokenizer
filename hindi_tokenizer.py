@@ -1,9 +1,64 @@
 import re
+import requests
 from pathlib import Path
 from tokenizers import Tokenizer
 from tokenizers.models import BPE
 from tokenizers.trainers import BpeTrainer
 from tokenizers.pre_tokenizers import Whitespace
+from tqdm import tqdm
+
+def download_dataset(url, filepath):
+    """
+    Downloads the dataset from the given URL with a progress bar.
+    
+    Args:
+        url (str): URL of the dataset
+        filepath (Path): Path where the file should be saved
+    """
+    print(f"Downloading dataset from {url}")
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
+    
+    # Get file size for progress bar
+    total_size = int(response.headers.get('content-length', 0))
+    block_size = 1024  # 1 KB
+    
+    with open(filepath, 'wb') as file, tqdm(
+        desc="Downloading",
+        total=total_size,
+        unit='iB',
+        unit_scale=True,
+        unit_divisor=1024,
+    ) as progress_bar:
+        for data in response.iter_content(block_size):
+            size = file.write(data)
+            progress_bar.update(size)
+
+def prepare_dataset(input_path, sample_size=None):
+    """
+    Prepares the dataset by optionally sampling and basic cleaning.
+    
+    Args:
+        input_path (Path): Path to the raw dataset
+        sample_size (int, optional): Number of lines to sample. If None, use entire dataset
+    
+    Returns:
+        list: Processed lines from the dataset
+    """
+    print("Reading and preparing dataset...")
+    with open(input_path, 'r', encoding='utf-8') as file:
+        if sample_size:
+            # Read the first sample_size non-empty lines
+            lines = []
+            for line in file:
+                if line.strip():
+                    lines.append(line)
+                    if len(lines) >= sample_size:
+                        break
+        else:
+            lines = [line for line in file if line.strip()]
+    
+    return lines
 
 def preprocess_hindi_text(text):
     """
@@ -47,27 +102,45 @@ def main():
     output_dir = Path("output")
     output_dir.mkdir(exist_ok=True)
     
-    # Step 1: Load and preprocess the dataset
-    input_path = "raw_hindi_dataset.txt"
+    # Dataset URL and paths
+    dataset_url = "https://objectstore.e2enetworks.net/ai4b-public-nlu-nlg/v1-indiccorp/hi.txt"
+    raw_dataset_path = Path("raw_hindi_dataset.txt")
     preprocessed_path = output_dir / "preprocessed_hindi.txt"
     
-    print("Step 1: Preprocessing dataset...")
+    # Step 1: Download dataset if it doesn't exist
+    if not raw_dataset_path.exists():
+        print("Step 1: Downloading dataset...")
+        try:
+            download_dataset(dataset_url, raw_dataset_path)
+        except requests.exceptions.RequestException as e:
+            print(f"Error downloading dataset: {e}")
+            return
+    else:
+        print("Dataset already exists, skipping download.")
+    
+    # Step 2: Prepare and preprocess the dataset
+    print("Step 2: Preprocessing dataset...")
     try:
-        with open(input_path, "r", encoding="utf-8") as file:
-            raw_data = file.readlines()
+        # Sample 100,000 lines for initial testing
+        # Remove or adjust sample_size for full dataset
+        raw_data = prepare_dataset(raw_dataset_path, sample_size=100_000)
     except FileNotFoundError:
-        print(f"Error: Input file '{input_path}' not found!")
+        print(f"Error: Input file '{raw_dataset_path}' not found!")
+        return
+    except Exception as e:
+        print(f"Error preparing dataset: {e}")
         return
 
     # Preprocess the text
-    preprocessed_data = [preprocess_hindi_text(line) for line in raw_data]
+    print("Cleaning and normalizing text...")
+    preprocessed_data = [preprocess_hindi_text(line) for line in tqdm(raw_data)]
 
     # Save the preprocessed dataset
     with open(preprocessed_path, "w", encoding="utf-8") as file:
         file.write("\n".join(preprocessed_data))
 
-    # Step 2: Train the BPE tokenizer
-    print("Step 2: Training BPE tokenizer...")
+    # Step 3: Train the BPE tokenizer
+    print("Step 3: Training BPE tokenizer...")
     tokenizer = Tokenizer(BPE())
     tokenizer.pre_tokenizer = Whitespace()
 
@@ -81,16 +154,16 @@ def main():
     # Train the tokenizer
     tokenizer.train([str(preprocessed_path)], trainer)
 
-    # Step 3: Save the trained tokenizer
-    print("Step 3: Saving tokenizer files...")
+    # Step 4: Save the trained tokenizer
+    print("Step 4: Saving tokenizer files...")
     vocab_path = output_dir / "hindi_vocab.bpe"
     config_path = output_dir / "hindi_encoder.json"
     
     tokenizer.model.save(str(output_dir), "hindi_vocab")
     tokenizer.save(str(config_path))
 
-    # Step 4: Evaluate compression ratio
-    print("Step 4: Calculating compression ratio...")
+    # Step 5: Evaluate compression ratio
+    print("Step 5: Calculating compression ratio...")
     compression_ratio = calculate_compression_ratio(tokenizer, preprocessed_path)
     print(f"Compression Ratio: {compression_ratio:.2f}")
 
