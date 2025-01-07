@@ -46,7 +46,7 @@ python use_tokenizer.py
 .
 ├── hindi_tokenizer.py # Main training script
 ├── use_tokenizer.py # Interactive encoding/decoding tool
-├── raw_hindi_dataset.txt # Downloaded dataset (2GB)
+├── raw_hindi_dataset.txt # Downloaded dataset (5GB)
 └── output/
 ├── preprocessed_hindi.txt # Cleaned text
 ├── hindi_vocab.bpe # BPE vocabulary
@@ -118,15 +118,22 @@ The script includes comprehensive error handling for:
 
 ## BPE Tokenizer Training Logs
 ```
-PS E:\AI\github\era-v3-s11-hindi-tokenizer> python hindi_tokenizer.py
-Sufficient dataset already exists, skipping download.
+PS D:\ERA-V3\Github\era-v3-s11-hindi-tokenizer> python hindi_tokenizer.py
+Step 1: Downloading dataset (5GB limit)...
+Downloading first 5GB from https://objectstore.e2enetworks.net/ai4b-public-nlu-nlg/v1-indiccorp/hi.txt
+Downloading: 100%|███████████████████████████████████████████████████████████▉| 5.00G/5.00G [11:15<00:00, 5.50MiB/s]
+Reached 5GB limit, stopping download.
+Downloading: 100%|████████████████████████████████████████████████████████████| 5.00G/5.00G [11:15<00:00, 4.77MiB/s] 
 Step 2: Preprocessing dataset...
 Reading and preparing dataset...
-Reading lines: 200000it [00:01, 186342.74it/s]
+Reading lines: 5000009it [00:05, 878348.47it/s]
 Cleaning and normalizing text...
-100%|███████████████████████████████████████████████████████████████████████████████| 200000/200000 [00:07<00:00, 26899.32it/s] 
+100%|█████████████████████████████████████████████████████████████████| 5000000/5000000 [00:41<00:00, 119065.75it/s] 
 Step 3: Training BPE tokenizer...
-[00:00:11] Pre-processing files (68 Mo)   ██████████████████████████████████████████████████████████████████                100%[00:00:00] Tokenize words                 ██████████████████████████████████████████████████████████████████ 154145   /   154145[00:00:01] Count pairs                    ██████████████████████████████████████████████████████████████████ 154145   /   154145[00:00:02] Compute merges                 ██████████████████████████████████████████████████████████████████ 4400     /     4400
+[00:00:41] Pre-processing files (1717 Mo) ███████████████████████████████████████████████████████                100%[00:00:01] Tokenize words                 ███████████████████████████████████████████████████████ 1031632  /  1031632
+[00:00:02] Count pairs                    ███████████████████████████████████████████████████████ 1031632  /  1031632
+[00:00:04] Compute merges                 ███████████████████████████████████████████████████████ 4384     /     4384
+
 Final vocabulary size: 4500 tokens
 Special tokens: [AddedToken("<pad>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True), AddedToken("<unk>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True), AddedToken("<s>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True), AddedToken("</s>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True)]
 Success: Vocabulary size (4500) is within the limit of 5000 tokens
@@ -141,15 +148,15 @@ Tokenizer Test:
 Original Text: नमस्ते भारत! यह एक परीक्षण वाक्य है।
 
 Tokens: ['नम', 'स्ते', 'भारत', '!', 'यह', 'एक', 'परीक्षण', 'वा', 'क्', 'य', 'है', '.']
-Token IDs: [2517, 2074, 340, 4, 201, 164, 3901, 123, 121, 54, 105, 7]
+Token IDs: [2825, 2037, 356, 4, 216, 180, 3852, 139, 137, 55, 121, 7]
 
 Decoded Text: नम स्ते भारत ! यह एक परीक्षण वा क् य है .
-PS E:\AI\github\era-v3-s11-hindi-tokenizer> 
+PS D:\ERA-V3\Github\era-v3-s11-hindi-tokenizer>
 ```
 
 ## BPE Tokenizer Sample Usage Logs
 ```
-PS E:\AI\github\era-v3-s11-hindi-tokenizer> python use_tokenizer.py
+PS D:\ERA-V3\Github\era-v3-s11-hindi-tokenizer> python use_tokenizer.py
 Hindi Text Encoder/Decoder (type 'quit' to exit)
 --------------------------------------------------
 
@@ -157,23 +164,22 @@ Enter Hindi text to encode/decode: हाउसफुल से अक्षय 
 
 Encoding:
 Tokens: ['हाउस', 'फु', 'ल', 'से', 'अक्षय', 'कुमार', 'के', 'दो', 'लुक', 'सामने', 'आए', 'हैं', '.']
-Token IDs: [3011, 1514, 57, 112, 3441, 603, 100, 241, 3837, 730, 776, 144, 7]
+Token IDs: [2926, 1549, 58, 128, 3628, 636, 116, 257, 3718, 760, 797, 160, 7]
 
 Decoding:
 Text: हाउस फु ल से अक्षय कुमार के दो लुक सामने आए हैं .
 
-Enter Hindi text to encode/decode: बिहार के भोजपुर के सपूत और महान गणितज्ञ डॉ. वशिष्ठ नारायण सिंह का अंतिम संस्कार शुक्रवार को.
+Enter Hindi text to encode/decode: बिहार के भोजपुर के सपूत और महान गणितज्ञ डॉ. वशिष्ठ नारायण सिंह का अंतिम संस्कार शु          क्रवार को.
 
 Encoding:
-Tokens: ['बिहार', 'के', 'भोज', 'पुर', 'के', 'स', 'पू', 'त', 'और', 'महान', 'गण', 'ित', 'ज्ञ', 'डॉ', '.', 'व', 'शि', 'ष्ठ', 'नाराय
-ण', 'सिंह', 'का', 'अंतिम', 'संस्कार', 'शुक्रवार', 'को', '.']
-Token IDs: [1378, 100, 4484, 381, 100, 62, 200, 43, 129, 3294, 1258, 228, 580, 660, 7, 59, 205, 884, 3542, 367, 109, 1723, 4134, 1496, 114, 7]
+Tokens: ['बिहार', 'के', 'भोज', 'पुर', 'के', 'स', 'पू', 'त', 'और', 'महान', 'गण', 'ित', 'ज्ञ', 'डॉ', '.', 'व', 'शि', 'ष    ष्ठ', 'नारायण', 'सिंह', 'का', 'अंतिम', 'संस्', 'कार', 'शुक्रवार', 'को', '.']
+Token IDs: [1363, 116, 4334, 394, 116, 64, 215, 44, 146, 3417, 1322, 255, 592, 663, 7, 61, 220, 923, 3391, 379, 125, 1750, 1341, 154, 1475, 130, 7]
 
 Decoding:
-Text: बिहार के भोज पुर के स पू त और महान गण ित ज्ञ डॉ . व शि ष्ठ नारायण सिंह का अंतिम संस्कार शुक्रवार को .
+Text: बिहार के भोज पुर के स पू त और महान गण ित ज्ञ डॉ . व शि ष्ठ नारायण सिंह का अंतिम संस् कार शुक्रवार को .
 
 Enter Hindi text to encode/decode: quit
-PS E:\AI\github\era-v3-s11-hindi-tokenizer> 
+PS D:\ERA-V3\Github\era-v3-s11-hindi-tokenizer> 
 ```
 
 ## Contributing
