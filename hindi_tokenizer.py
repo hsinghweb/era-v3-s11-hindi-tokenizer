@@ -195,10 +195,10 @@ def main():
     preprocessed_path = output_dir / "preprocessed_hindi.txt"
     
     # Step 1: Download dataset if it doesn't exist or is too small
-    if not raw_dataset_path.exists() or raw_dataset_path.stat().st_size < (2 * 1024 * 1024 * 1024):
-        print("Step 1: Downloading dataset (2GB limit)...")
+    if not raw_dataset_path.exists() or raw_dataset_path.stat().st_size < (5 * 1024 * 1024 * 1024):
+        print("Step 1: Downloading dataset (5GB limit)...")
         try:
-            download_dataset(dataset_url, raw_dataset_path, max_size_gb=2)
+            download_dataset(dataset_url, raw_dataset_path, max_size_gb=5)
         except requests.exceptions.RequestException as e:
             print(f"Error downloading dataset: {e}")
             if not raw_dataset_path.exists():
@@ -210,11 +210,11 @@ def main():
     # Step 2: Prepare and preprocess the dataset
     print("Step 2: Preprocessing dataset...")
     try:
-        # Sample 200,000 lines from the first 1 million lines
+        # Sample 5,000,000 lines from the first 6 million lines
         raw_data = prepare_dataset(
             raw_dataset_path,
-            sample_size=200_000,
-            max_lines=1_000_000
+            sample_size=5_000_000,
+            max_lines=6_000_000
         )
     except FileNotFoundError:
         print(f"Error: Input file '{raw_dataset_path}' not found!")

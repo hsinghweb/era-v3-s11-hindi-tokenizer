@@ -5,9 +5,9 @@ A Python script for preprocessing Hindi text and training a Byte Pair Encoding (
 ## Features
 
 - **Smart Dataset Management**:
-  - Downloads first 2GB of IndicCorp Hindi dataset
+  - Downloads first 5GB of IndicCorp Hindi dataset
   - Supports download resume capability
-  - Samples 200,000 lines from first 1 million lines
+  - Samples 5,000,000 lines from first 6 million lines
   - Progress bars for download and processing
 
 - **Text Preprocessing**:
@@ -59,8 +59,8 @@ python use_tokenizer.py
 
 - **Source**: IndicCorp Hindi Collection
 - **URL**: https://objectstore.e2enetworks.net/ai4b-public-nlu-nlg/v1-indiccorp/hi.txt
-- **Download Size**: First 2GB of ~20GB file
-- **Training Sample**: 200,000 lines from first 1 million lines
+- **Download Size**: First 5GB of ~20GB file
+- **Training Sample**: 5,000,000 lines from first 6 million lines
 
 ## Usage Examples
 
