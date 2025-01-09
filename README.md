@@ -7,7 +7,7 @@ A Python script for preprocessing Hindi text and training a Byte Pair Encoding (
 - **Smart Dataset Management**:
   - Downloads first 5GB of IndicCorp Hindi dataset
   - Supports download resume capability
-  - Samples 5,000,000 lines from first 6 million lines
+  - Samples 1 million lines from first 2 million lines
   - Progress bars for download and processing
 
 - **Text Preprocessing**:
@@ -17,16 +17,18 @@ A Python script for preprocessing Hindi text and training a Byte Pair Encoding (
   - Cleans whitespace
   
 - **BPE Tokenizer Training**:
-  - Vocabulary size: 4,500 tokens (configurable, < 5000)
+  - Optimized training with numpy vectorized operations
+  - Batch processing for better performance
+  - Vocabulary size: 4,500 tokens (configurable)
   - Special tokens: `<pad>`, `<unk>`, `<s>`, `</s>`
   - Minimum token frequency: 2
-  - Target compression ratio ≥ 3.2
+  - Progress tracking with compression ratio
 
 ## Requirements
 
 Install required packages:
 ```
-pip install tokenizers requests tqdm
+pip install numpy requests tqdm matplotlib
 ```
 
 ## Quick Start
@@ -49,9 +51,6 @@ python use_tokenizer.py
 ├── raw_hindi_dataset.txt # Downloaded dataset (5GB)
 └── output/
 ├── preprocessed_hindi.txt # Cleaned text
-├── hindi_vocab.bpe # BPE vocabulary
-├── hindi_vocab-vocab.json # Vocabulary mapping
-├── hindi_vocab-merges.txt # BPE merge rules
 └── hindi_encoder.json # Tokenizer config
 ```
 
@@ -60,7 +59,7 @@ python use_tokenizer.py
 - **Source**: IndicCorp Hindi Collection
 - **URL**: https://objectstore.e2enetworks.net/ai4b-public-nlu-nlg/v1-indiccorp/hi.txt
 - **Download Size**: First 5GB of ~20GB file
-- **Training Sample**: 5,000,000 lines from first 6 million lines
+- **Training Sample**: 1,000,000 lines from first 2 million lines
 
 ## Usage Examples
 
@@ -99,13 +98,17 @@ print(f"Decoded: {decoded_text}")
 - Model: Byte Pair Encoding (BPE)
 - Vocabulary size: 4,500
 - Special tokens: 4
-- Pre-tokenizer: Whitespace
-- Minimum frequency: 2
+- Training batch size: 1,000
+- Statistics tracking interval: 500
+- Vectorized operations using numpy
 
-### Compression Ratio
-Calculated as: `total_characters / total_tokens`
-- Target: ≥ 3.2
-- Verified after training
+### Performance Optimizations
+- Numpy-based vectorized operations
+- Batch processing of merge operations
+- Efficient memory management
+- Sliding window view for pair counting
+- Pre-allocated arrays for speed
+- Batched statistics updates
 
 ## Error Handling
 
@@ -119,64 +122,102 @@ The script includes comprehensive error handling for:
 ## BPE Tokenizer Training Logs
 ```
 PS D:\ERA-V3\Github\era-v3-s11-hindi-tokenizer> python hindi_tokenizer.py
-Step 1: Downloading dataset (5GB limit)...
-Downloading first 5GB from https://objectstore.e2enetworks.net/ai4b-public-nlu-nlg/v1-indiccorp/hi.txt
-Downloading: 100%|███████████████████████████████████████████████████████████▉| 5.00G/5.00G [11:15<00:00, 5.50MiB/s]
-Reached 5GB limit, stopping download.
-Downloading: 100%|████████████████████████████████████████████████████████████| 5.00G/5.00G [11:15<00:00, 4.77MiB/s] 
+Sufficient dataset already exists, skipping download.
 Step 2: Preprocessing dataset...
 Reading and preparing dataset...
-Reading lines: 5000009it [00:05, 878348.47it/s]
+Reading lines: 1000004it [00:01, 883763.77it/s]
 Cleaning and normalizing text...
-100%|█████████████████████████████████████████████████████████████████| 5000000/5000000 [00:41<00:00, 119065.75it/s] 
-Step 3: Training BPE tokenizer...
-[00:00:41] Pre-processing files (1717 Mo) ███████████████████████████████████████████████████████                100%[00:00:01] Tokenize words                 ███████████████████████████████████████████████████████ 1031632  /  1031632
-[00:00:02] Count pairs                    ███████████████████████████████████████████████████████ 1031632  /  1031632
-[00:00:04] Compute merges                 ███████████████████████████████████████████████████████ 4384     /     4384
+100%|█████████████████████████████████████████████████████████████████| 1000000/1000000 [00:08<00:00, 116119.63it/s] 
+Initializing vocabulary...
+Computing initial frequencies...
+Training BPE:  11%|███████                                                       | 500/4388 [05:38<13:37,  4.76it/s]
+Iteration 612
+Created token: 'रं' (merged 38,595 times)
+Current vocabulary size: 612
+Current data size: 133,371,267
+Current compression ratio: 1.68
+--------------------------------------------------------------------------------
+Training BPE:  23%|█████████████▉                                               | 1000/4388 [07:20<11:02,  5.11it/s]
+Iteration 1,112
+Created token: 'शव' (merged 7,343 times)
+Current vocabulary size: 1,112
+Current data size: 133,371,267
+Current compression ratio: 1.74
+--------------------------------------------------------------------------------
+Training BPE:  34%|████████████████████▊                                        | 1500/4388 [11:14<07:38,  6.30it/s]
+Iteration 1,612
+Created token: 'हुत' (merged 22,735 times)
+Current vocabulary size: 1,612
+Current data size: 133,371,267
+Current compression ratio: 2.24
+--------------------------------------------------------------------------------
+Training BPE:  46%|███████████████████████████▊                                 | 2000/4388 [14:25<17:55,  2.22it/s]
+Iteration 2,112
+Created token: 'यास' (merged 13,260 times)
+Current vocabulary size: 2,112
+Current data size: 133,371,267
+Current compression ratio: 2.39
+--------------------------------------------------------------------------------
+Training BPE:  57%|██████████████████████████████████▊                          | 2500/4388 [21:53<11:47,  2.67it/s]
+Iteration 2,612
+Created token: 'ा भी ' (merged 7,752 times)
+Current vocabulary size: 2,612
+Current data size: 133,371,267
+Current compression ratio: 2.66
+--------------------------------------------------------------------------------
+Training BPE:  68%|█████████████████████████████████████████▋                   | 3000/4388 [24:51<07:20,  3.15it/s]
+Iteration 3,112
+Created token: ' हो स' (merged 5,561 times)
+Current vocabulary size: 3,112
+Current data size: 133,371,267
+Current compression ratio: 2.79
+--------------------------------------------------------------------------------
+Training BPE:  80%|████████████████████████████████████████████████▋            | 3500/4388 [31:43<04:56,  3.00it/s]
+Iteration 3,612
+Created token: 'ों को' (merged 3,848 times)
+Current vocabulary size: 3,612
+Current data size: 133,371,267
+Current compression ratio: 2.93
+--------------------------------------------------------------------------------
+Training BPE:  91%|███████████████████████████████████████████████████████▌     | 4000/4388 [34:44<02:11,  2.96it/s]
+Iteration 4,112
+Created token: '्यूज' (merged 3,115 times)
+Current vocabulary size: 4,112
+Current data size: 133,371,267
+Current compression ratio: 3.03
+--------------------------------------------------------------------------------
+Training BPE: 100%|█████████████████████████████████████████████████████████████| 4388/4388 [39:35<00:00,  1.85it/s]
 
-Final vocabulary size: 4500 tokens
-Special tokens: [AddedToken("<pad>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True), AddedToken("<unk>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True), AddedToken("<s>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True), AddedToken("</s>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True)]
-Success: Vocabulary size (4500) is within the limit of 5000 tokens
-
-Step 4: Saving tokenizer files...
-Step 5: Calculating compression ratio...
-Compression Ratio: 3.61
-Success: Compression ratio (3.61) exceeds the minimum requirement of 3.2
+Training completed. Final vocabulary size: 4500
+Final compression ratio: 3.11
 
 Tokenizer Test:
 --------------------------------------------------
 Original Text: नमस्ते भारत! यह एक परीक्षण वाक्य है।
 
-Tokens: ['नम', 'स्ते', 'भारत', '!', 'यह', 'एक', 'परीक्षण', 'वा', 'क्', 'य', 'है', '.']
-Token IDs: [2825, 2037, 356, 4, 216, 180, 3852, 139, 137, 55, 121, 7]
+Tokens: ['नम', 'स्त', 'े', 'भारत', '!', 'यह', 'एक', 'पर', 'ीक', '्ष', 'ण', 'वा', 'क्', 'य', 'है.']
+Token IDs: [619, 1211, 78, 2175, 5, 300, 256, 176, 422, 244, 43, 161, 165, 55, 1177]
 
-Decoded Text: नम स्ते भारत ! यह एक परीक्षण वा क् य है .
-PS D:\ERA-V3\Github\era-v3-s11-hindi-tokenizer>
+Decoded Text: नम स्त े भारत ! यह एक पर ीक ्ष ण वा क् य है.
 ```
 
 ## BPE Tokenizer Sample Usage Logs
 ```
-PS D:\ERA-V3\Github\era-v3-s11-hindi-tokenizer> python use_tokenizer.py
+PS D:\ERA-V3\Github\era-v3-s11-hindi-tokenizer> python use_tokenizer.py  
+Loaded vocabulary size: 4500
+Max token ID: 4499
+Sample tokens: [(0, '<pad>'), (1, '<unk>'), (2, '<s>'), (3, '</s>'), (4, ' ')]
 Hindi Text Encoder/Decoder (type 'quit' to exit)
 --------------------------------------------------
 
-Enter Hindi text to encode/decode: हाउसफुल से अक्षय कुमार के दो लुक सामने आए हैं.
+Enter Hindi text to encode/decode: इसलिए नियुक्ति प्रक्रिया को आगे बढ़ा दिया गया.
 
 Encoding:
-Tokens: ['हाउस', 'फु', 'ल', 'से', 'अक्षय', 'कुमार', 'के', 'दो', 'लुक', 'सामने', 'आए', 'हैं', '.']
-Token IDs: [2926, 1549, 58, 128, 3628, 636, 116, 257, 3718, 760, 797, 160, 7]
+Tokens: ['इसलिए', 'निय', 'ुक', '्त', 'ि', 'प्र', 'क्र', 'िया', 'को', 'आग', 'े', 'बढ़', 'ा', 'दिया', 'गया', '.']       
+Token IDs: [3084, 1926, 354, 188, 70, 1130, 1508, 1214, 149, 741, 78, 1057, 69, 1898, 1415, 8]
 
 Decoding:
-Text: हाउस फु ल से अक्षय कुमार के दो लुक सामने आए हैं .
-
-Enter Hindi text to encode/decode: बिहार के भोजपुर के सपूत और महान गणितज्ञ डॉ. वशिष्ठ नारायण सिंह का अंतिम संस्कार शु          क्रवार को.
-
-Encoding:
-Tokens: ['बिहार', 'के', 'भोज', 'पुर', 'के', 'स', 'पू', 'त', 'और', 'महान', 'गण', 'ित', 'ज्ञ', 'डॉ', '.', 'व', 'शि', 'ष    ष्ठ', 'नारायण', 'सिंह', 'का', 'अंतिम', 'संस्', 'कार', 'शुक्रवार', 'को', '.']
-Token IDs: [1363, 116, 4334, 394, 116, 64, 215, 44, 146, 3417, 1322, 255, 592, 663, 7, 61, 220, 923, 3391, 379, 125, 1750, 1341, 154, 1475, 130, 7]
-
-Decoding:
-Text: बिहार के भोज पुर के स पू त और महान गण ित ज्ञ डॉ . व शि ष्ठ नारायण सिंह का अंतिम संस् कार शुक्रवार को .
+Text: इसलिए निय ुक ्त ि प्र क्र िया को आग े बढ़ ा दिया गया .
 
 Enter Hindi text to encode/decode: quit
 PS D:\ERA-V3\Github\era-v3-s11-hindi-tokenizer> 

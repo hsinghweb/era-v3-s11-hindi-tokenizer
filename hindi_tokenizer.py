@@ -542,7 +542,7 @@ def main():
     # Step 2: Prepare and preprocess the dataset
     print("Step 2: Preprocessing dataset...")
     try:
-        # Sample 300K lines from the first 1 Million lines
+        # Sample 1 Million lines from the first 2 Million lines
         raw_data = prepare_dataset(
             raw_dataset_path,
             sample_size=1_000_000,
